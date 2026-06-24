@@ -1,0 +1,31 @@
+{
+  "name": "refineddigital/cms-form-builder-google-sheets",
+  "description": "Google Sheets integration for Form Builder",
+  "require": {
+    "php": "^8.2",
+    "refineddigital/cms": "^1.22|dev-master",
+    "refineddigital/cms-form-builder": "^1.10|dev-master",
+    "google/apiclient": "^2.19"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Matthias Law",
+      "email": "matthias@refineddigital.co.nz"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "RefinedDigital\\GoogleSheets\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "RefinedDigital\\GoogleSheets\\Module\\Providers\\FormBuilderGoogleSheetsServiceProvider"
+      ],
+      "aliases": {
+      }
+    }
+  }
+}

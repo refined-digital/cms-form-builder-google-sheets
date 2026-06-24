@@ -1,0 +1,22 @@
+{
+  "name": "@refineddigital/cms-form-builder-google-sheets",
+  "version": "1.0.0",
+  "scripts": {
+    "publish-and-tag": "git push --tags && git push origin master",
+    "version:patch": "npm version patch && npm run publish-and-tag",
+    "version:minor": "npm version minor && npm run publish-and-tag",
+    "version:major": "npm version major && npm run publish-and-tag"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@gitlab.com/refineddigital/cms-form-builder-google-sheets.git"
+  },
+  "author": "Matthias Law",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/refineddigital/cms-form-builder-google-sheets/issues"
+  },
+  "homepage": "https://gitlab.com/refineddigital/cms-form-builder-google-sheets#README",
+  "devDependencies": {},
+  "dependencies": {}
+}

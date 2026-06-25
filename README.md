@@ -1,6 +1,6 @@
 # Form Builder — Google Sheets
 
-A Google Sheets integration for [RefinedCMS Form Builder](https://gitlab.com/refineddigital/cms-form-builder). On submit, a form's field values are appended as a new row to a Google Sheet, then the normal submission email is still sent.
+A Google Sheets integration for [RefinedCMS Form Builder](https://gitlab.com/refineddigital/cms-form-builder). On submit, a form's selected field values are appended as a new row to a Google Sheet. You pick which fields go to the sheet and in what column order from the form's Integrations panel; the normal submission email still sends unless you turn it off there.
 
 Requires `refineddigital/cms-form-builder` and `google/apiclient`.
 
@@ -39,18 +39,17 @@ Once the package is installed it appears automatically in every form's **Integra
 In the CMS admin, edit a form and open the **Integrations** tab:
 
 1. Toggle **Google Sheets** on.
-2. Leave **Send email** on if you still want the normal submission notification to go out (turn it off to write to the sheet *only*).
-3. For each field you want written to the sheet, set its **Merge Field** value (on the field's settings). Fields with no merge field are ignored.
+2. Click **Configure** to open the settings modal. It has two tabs:
+   - **Fields** — every form field, plus a built-in **Date / Time** column. Toggle each on/off and **drag to set the column order** in the sheet. The Date column is a synthetic column (not a form field) and can be dragged anywhere in the order, the same as a real field.
+   - **Config** — the **Send email** toggle (leave on to still send the normal notification; turn off to write to the sheet *only*).
 
-That's it — on submit, each merge-field'd value is appended as a row to the sheet. All Google credentials come from `.env`; there's nothing to configure per form.
+That's it — on submit, the enabled columns are appended as a row to the sheet **in the order you set**. All Google credentials come from `.env`; only the column selection/order is per form.
 
 ## Column ordering
 
-The row is built from the form's merge-field'd fields **in field position order** — i.e. the order the fields appear in the form. There is no separate column-mapping UI: column 1 is the first merge-field'd field, column 2 the second, and so on.
+Columns are written in the exact order shown on the **Fields** tab. Drag a row up or down to move that value left or right in the sheet; toggle a row off to omit it entirely. The **Date / Time** column is just another draggable row — put it first (the default) or anywhere else.
 
-To change which sheet column a value lands in, reorder the fields in the form so their order matches your sheet columns.
-
-If `timestamp` is enabled in the config (default), a UTC `Y-m-d H:i:s` timestamp is prepended as the first column — so your first form field maps to column **B**, not A.
+If a form has **never been configured** (the Configure modal was never saved), the integration falls back to legacy behaviour: every field with a **Merge Field** value, in field position order, with a leading UTC timestamp (controlled by the `timestamp` config flag).
 
 ## Config
 
@@ -61,7 +60,7 @@ return [
     'spreadsheet_id' => env('GOOGLE_SHEETS_ID'),
     'api_key'        => env('GOOGLE_API_KEY'),
     'auth_config'    => env('GOOGLE_AUTH_CONFIG'),
-    'timestamp'      => true, // prepend a UTC timestamp column to each row
+    'timestamp'      => true, // fallback only: prepend a UTC timestamp when a form has no saved column config
 ];
 ```
 
@@ -69,9 +68,10 @@ return [
 
 The service provider registers the integration with the core `FormBuilderIntegrationAggregate`, which is what makes it show up in the panel. `Process` implements `FormBuilderIntegrationInterface`; when an enabled form is submitted, the core form-builder calls `Process::process($request, $form, $settings)`, which:
 
-1. Maps submitted values to columns via the core `FormsRepository::formatWithMergeFields()` helper (keyed by each field's `merge_field`).
-2. Builds a single row (optional leading timestamp), UTF-8 encoded.
-3. Appends it to the sheet via `Classes\Google::put()`, which finds the next empty row and writes a `RAW` value range.
+1. Reads `$settings['config']['fields']` — the ordered list of columns saved from the Configure modal (`[{key, enabled}]`). Each `key` is either a form field name (`field{id}`) or the synthetic `__date`.
+2. Builds a single row from the enabled entries, in order: `__date` becomes a UTC `Y-m-d H:i:s` timestamp, every other key reads `$request->get($key)`. Array values (e.g. multi-checkbox) are joined with `, `. Everything is UTF-8 encoded.
+3. If no columns are configured, falls back to `FormsRepository::formatWithMergeFields()` (merge-field'd fields in position order, optional leading timestamp).
+4. Appends the row to the sheet via `Classes\Google::put()`, which finds the next empty row and writes a `RAW` value range.
 
 The integration does **not** send email — notifications are the form's own responsibility (controlled by the **Send email** toggle in the panel).
 

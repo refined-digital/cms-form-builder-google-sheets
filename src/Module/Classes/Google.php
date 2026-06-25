@@ -48,6 +48,10 @@ class Google
         $row = $dimensions->rowCount + 1;
         $column = $dimensions->colCount;
 
+        // the Sheets API needs values + each row to be JSON arrays, not objects;
+        // re-index defensively so gapped keys never serialize as {"0":..,"2":..}
+        $values = array_map('array_values', array_values($values));
+
         $body = new ValueRange(['values' => $values]);
         $range = 'A'.$row.':'.$column.$row;
 

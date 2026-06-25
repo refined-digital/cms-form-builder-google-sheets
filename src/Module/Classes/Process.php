@@ -30,13 +30,15 @@ class Process implements FormBuilderIntegrationInterface
         $configured = collect($config['fields'] ?? [])->where('enabled', true);
 
         if ($configured->isNotEmpty()) {
+            // values() re-indexes: the where() above leaves gapped keys, which
+            // would serialize as a JSON object and the Sheets API rejects it
             $row = $configured->map(function ($field) use ($request) {
                 if ($field['key'] === self::DATE_KEY) {
                     return Carbon::now('UTC')->format('Y-m-d H:i:s');
                 }
 
                 return $this->clean($request->get($field['key']));
-            })->all();
+            })->values()->all();
         } else {
             // fallback: every merge_field'd field, in field position order
             $row = [];

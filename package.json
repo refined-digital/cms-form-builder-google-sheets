@@ -1,6 +1,6 @@
 {
   "name": "@refineddigital/cms-form-builder-google-sheets",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "scripts": {
     "publish-and-tag": "git push --tags && git push origin master",
     "version:patch": "npm version patch && npm run publish-and-tag",
